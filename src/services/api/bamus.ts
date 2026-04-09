@@ -25,16 +25,15 @@ export interface AnggotaBamus {
 
 // ── Public APIs ──
 
-export async function fetchBamusInfo(): Promise<BamusInfo | null> {
-  const res = await fetch(`${BASE_URL}/bamus/info`);
+export async function fetchBamusInfo(id?: string): Promise<BamusInfo | null> {
+  const url = id ? `${BASE_URL}/bamus/info?id=${id}` : `${BASE_URL}/bamus/info`;
+  const res = await fetch(url);
   if (!res.ok) return null;
   return res.json();
 }
 
-export async function fetchAllBamusInfo(token: string): Promise<BamusInfo[]> {
-  const res = await fetch(`${BASE_URL}/bamus/info/all`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function fetchAllBamusInfo(): Promise<BamusInfo[]> {
+  const res = await fetch(`${BASE_URL}/bamus/info/all`);
   if (!res.ok) return [];
   return res.json();
 }

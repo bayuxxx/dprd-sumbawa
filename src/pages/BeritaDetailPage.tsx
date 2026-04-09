@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
-import { fetchBeritaDetail, fetchBerita, type Berita } from '../services/api';
+import { fetchBeritaDetail, fetchBerita, getImageUrl, type Berita } from '../services/api';
 
 const BeritaDetailPage: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -88,7 +88,7 @@ const BeritaDetailPage: React.FC = () => {
                         {berita.imageUrl && (
                             <div className="w-full aspect-[16/9] bg-gray-100 rounded-2xl overflow-hidden mb-10 shadow-md">
                                 <img
-                                    src={berita.imageUrl}
+                                    src={getImageUrl(berita.imageUrl)}
                                     alt={berita.title}
                                     className="w-full h-full object-cover"
                                 />
@@ -120,7 +120,7 @@ const BeritaDetailPage: React.FC = () => {
                                     <Link to={`/berita/${news.slug}`} key={news.id} className="group flex flex-col gap-3">
                                         <div className="w-full aspect-video rounded-xl overflow-hidden bg-gray-100">
                                             <img
-                                                src={news.imageUrl || 'https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=400&q=80'}
+                                                src={getImageUrl(news.imageUrl) || 'https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=400&q=80'}
                                                 alt={news.title}
                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                             />

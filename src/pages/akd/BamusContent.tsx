@@ -4,15 +4,16 @@ import { fetchBamusInfo } from '../../services/api';
 import type { BamusInfo } from '../../services/api';
 import { renderProfileCard, GridSkeleton } from './SharedComponents';
 
-const BamusContent: React.FC = () => {
+const BamusContent: React.FC<{ id?: string }> = ({ id }) => {
     const [bamusInfo, setBamusInfo] = useState<BamusInfo | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchBamusInfo()
+        setLoading(true);
+        fetchBamusInfo(id)
             .then((data) => setBamusInfo(data))
             .finally(() => setLoading(false));
-    }, []);
+    }, [id]);
 
     if (loading) {
         return (

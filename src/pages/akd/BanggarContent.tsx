@@ -4,15 +4,16 @@ import { fetchBanggarInfo } from '../../services/api';
 import type { BanggarInfo } from '../../services/api';
 import { renderProfileCard, GridSkeleton } from './SharedComponents';
 
-const BanggarContent: React.FC = () => {
+const BanggarContent: React.FC<{ id?: string }> = ({ id }) => {
     const [banggarInfo, setBanggarInfo] = useState<BanggarInfo | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchBanggarInfo()
+        setLoading(true);
+        fetchBanggarInfo(id)
             .then((data) => setBanggarInfo(data))
             .finally(() => setLoading(false));
-    }, []);
+    }, [id]);
 
     if (loading) {
         return (

@@ -1,3 +1,4 @@
+export { getImageUrl } from './api/config';
 export * from './api/auth';
 export * from './api/banner';
 export * from './api/berita';
@@ -10,3 +11,6 @@ export * from './api/sekretariat';
 export * from './api/bamus';
 export * from './api/bapemperda';
 export * from './api/banggar';
+export * from './api/bk';
+export * from './api/komisi';
+export * from './api/fraksi';

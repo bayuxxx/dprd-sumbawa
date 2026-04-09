@@ -10,10 +10,10 @@ import {
     Menu,
     X,
     ChevronRight,
-    Calendar,
     Building2,
     UsersRound,
     BookOpen,
+    Palette,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -25,10 +25,12 @@ const navItems = [
     { path: '/admin/berita', label: 'Berita', icon: Newspaper },
     { path: '/admin/banner', label: 'Banner Hero', icon: Image },
     { path: '/admin/pimpinan', label: 'Pimpinan', icon: Users },
-    { path: '/admin/masa-jabatan', label: 'Masa Jabatan', icon: Calendar },
+    { path: '/admin/komisi', label: 'Komisi', icon: Users },
     { path: '/admin/bamus', label: 'Badan Musyawarah', icon: UsersRound },
     { path: '/admin/bapemperda', label: 'Bapemperda', icon: BookOpen },
     { path: '/admin/banggar', label: 'Badan Anggaran', icon: BookOpen },
+    { path: '/admin/bk', label: 'Badan Kehormatan', icon: BookOpen },
+    { path: '/admin/fraksi', label: 'Fraksi', icon: Palette },
     { path: '/admin/sekretariat', label: 'Sekretariat', icon: Building2 },
     { path: '/admin/users', label: 'Admin Akun', icon: Shield },
 ];
@@ -103,7 +105,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 </div>
 
                 {/* Navigation */}
-                <nav className="p-3 flex-1">
+                <nav className="p-3 flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
                     <p className="text-blue-400/60 text-xs font-semibold uppercase tracking-widest mb-2 px-2">
                         Menu
                     </p>

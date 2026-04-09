@@ -15,6 +15,10 @@ export default defineConfig({
         // target: 'https://backend-dprd-nada.vercel.app',
         changeOrigin: true,
       },
+      '/uploads': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
     },
   },
 })

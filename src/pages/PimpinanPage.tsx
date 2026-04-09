@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
-import { fetchPimpinan } from '../services/api';
+import { fetchPimpinan, getImageUrl } from '../services/api';
 import type { Pimpinan } from '../services/api';
 
 const akdList = [
@@ -52,7 +52,7 @@ const PimpinanPage: React.FC = () => {
                         <div key={leader.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                             <div className="relative h-64">
                                 {leader.imageUrl ? (
-                                    <img src={leader.imageUrl} alt={leader.name} className="w-full h-full object-cover object-top" />
+                                    <img src={getImageUrl(leader.imageUrl)} alt={leader.name} className="w-full h-full object-cover object-top" />
                                 ) : (
                                     <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
                                         <User size={60} className="text-blue-300" />

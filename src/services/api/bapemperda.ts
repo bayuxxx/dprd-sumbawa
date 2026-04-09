@@ -25,16 +25,15 @@ export interface AnggotaBapemperda {
 
 // ── Public APIs ──
 
-export async function fetchBapemperdaInfo(): Promise<BapemperdaInfo | null> {
-  const res = await fetch(`${BASE_URL}/bapemperda/info`);
+export async function fetchBapemperdaInfo(id?: string): Promise<BapemperdaInfo | null> {
+  const url = id ? `${BASE_URL}/bapemperda/info?id=${id}` : `${BASE_URL}/bapemperda/info`;
+  const res = await fetch(url);
   if (!res.ok) return null;
   return res.json();
 }
 
-export async function fetchAllBapemperdaInfo(token: string): Promise<BapemperdaInfo[]> {
-  const res = await fetch(`${BASE_URL}/bapemperda/info/all`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function fetchAllBapemperdaInfo(): Promise<BapemperdaInfo[]> {
+  const res = await fetch(`${BASE_URL}/bapemperda/info/all`);
   if (!res.ok) return [];
   return res.json();
 }

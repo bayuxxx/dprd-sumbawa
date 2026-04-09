@@ -1,25 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
-import { fetchMasaJabatan } from '../services/api';
-import type { MasaJabatan } from '../services/api';
+import { fetchMasaJabatan, fetchAllBamusInfo, fetchAllBapemperdaInfo, fetchAllBanggarInfo, fetchAllBKInfo, fetchAllKomisiInfo } from '../services/api';
+import type { MasaJabatan, BamusInfo, BapemperdaInfo, BanggarInfo, BKInfo, KomisiInfo } from '../services/api';
 
 // Split content components
 import PimpinanContent from './akd/PimpinanContent';
 import BamusContent from './akd/BamusContent';
 import BapemperdaContent from './akd/BapemperdaContent';
 import BanggarContent from './akd/BanggarContent';
+import BKContent from './akd/BKContent';
+import KomisiContent from './akd/KomisiContent';
 
-type Submenu = { key: string; title: string };
+export type Submenu = { key: string; title: string; isLabel?: boolean };
 type AkdMenu = { key: string; title: string; submenus?: Submenu[] };
 
-// Static akd menus – Pimpinan submenus will be generated dynamically
+// Static akd menus
 const staticAkdMenus: AkdMenu[] = [
-    { key: 'bamus', title: 'Badan Musyawarah' },
-    { key: 'bapemperda', title: 'Badan Pembentukan Peraturan Daerah' },
-    { key: 'banggar', title: 'Badan Anggaran' },
-    { key: 'bk', title: 'Badan Kehormatan' },
-    { key: 'komisi', title: 'Komisi' },
     { key: 'dapil', title: 'Daerah Pemilihan' },
 ];
 
@@ -28,46 +25,119 @@ const AKDPage: React.FC = () => {
 
     // Data dari API
     const [masaJabatanList, setMasaJabatanList] = useState<MasaJabatan[]>([]);
+    const [bamusList, setBamusList] = useState<BamusInfo[]>([]);
+    const [bapemperdaList, setBapemperdaList] = useState<BapemperdaInfo[]>([]);
+    const [banggarList, setBanggarList] = useState<BanggarInfo[]>([]);
+    const [bkList, setBkList] = useState<BKInfo[]>([]);
+    const [komisiList, setKomisiList] = useState<KomisiInfo[]>([]);
     const [loadingMasa, setLoadingMasa] = useState(true);
 
     useEffect(() => {
-        fetchMasaJabatan().then((data) => {
-            setMasaJabatanList(data);
+        Promise.all([
+            fetchMasaJabatan(),
+            fetchAllBamusInfo(),
+            fetchAllBapemperdaInfo(),
+            fetchAllBanggarInfo(),
+            fetchAllBKInfo(),
+            fetchAllKomisiInfo()
+        ]).then(([masaData, bamusData, bapemperdaData, banggarData, bkData, komisiData]) => {
+            setMasaJabatanList(masaData);
+            setBamusList(bamusData);
+            setBapemperdaList(bapemperdaData);
+            setBanggarList(banggarData);
+            setBkList(bkData);
+            setKomisiList(komisiData);
             setLoadingMasa(false);
         });
     }, []);
 
-    // Build dynamic slugs from masa jabatan
+    // Build dynamic slugs from masa jabatan for pimpinan
     const aktifMasa = masaJabatanList.find((m) => m.isAktif);
     const pastMasaList = masaJabatanList.filter((m) => !m.isAktif);
 
-    // Build akdMenus dynamically
     const pimpinanSubmenus = [
         ...(aktifMasa ? [{ key: `pimpinan-${aktifMasa.id}`, title: `Pimpinan DPRD Masa Jabatan ${aktifMasa.periode}` }] : []),
         ...pastMasaList.map((m) => ({ key: `pimpinan-${m.id}`, title: `Pimpinan DPRD Masa Jabatan ${m.periode}` })),
         { key: 'pimpinan-terdahulu', title: 'Pimpinan DPRD Terdahulu' },
     ];
 
+    const generateSubmenus = (baseKey: string, titleName: string, listData: { id: string, isAktif: boolean, masaJabatan: string }[]) => {
+        const activeItem = listData.find(item => item.isAktif);
+        const pastItems = listData.filter(item => !item.isAktif);
+        return [
+            ...(activeItem ? [{ key: `${baseKey}-${activeItem.id}`, title: `${titleName} Masa Jabatan ${activeItem.masaJabatan}` }] : []),
+            ...pastItems.map(m => ({ key: `${baseKey}-${m.id}`, title: `${titleName} Masa Jabatan ${m.masaJabatan}` }))
+        ];
+    };
+
+    const bamusSubmenus = generateSubmenus('bamus', 'Badan Musyawarah', bamusList);
+    const bapemperdaSubmenus = generateSubmenus('bapemperda', 'Badan Pembentukan Peraturan Daerah', bapemperdaList);
+    const banggarSubmenus = generateSubmenus('banggar', 'Badan Anggaran', banggarList);
+    const bkSubmenus = generateSubmenus('bk', 'Badan Kehormatan', bkList);
+
+    // Generate Komisi Submenus (grouped by Masa Jabatan)
+    const generateKomisiSubmenus = () => {
+        const submenus: Submenu[] = [];
+
+        // Group by Masa Jabatan
+        const grouped: Record<string, KomisiInfo[]> = {};
+        komisiList.forEach(k => {
+            if (!grouped[k.masaJabatan]) grouped[k.masaJabatan] = [];
+            grouped[k.masaJabatan].push(k);
+        });
+
+        // Determine ordering of masa jabatan (we want active first, then descending order of year)
+        // Here we just use the list of MasaJabatan as an ordering hint
+        const sortedMasa = masaJabatanList.slice().sort((a, b) => {
+            if (a.isAktif) return -1;
+            if (b.isAktif) return 1;
+            return b.periode.localeCompare(a.periode);
+        });
+
+        sortedMasa.forEach(masa => {
+            const items = grouped[masa.periode];
+            if (items && items.length > 0) {
+                // Add header label
+                submenus.push({ key: `label-${masa.id}`, title: `Masa Jabatan ${masa.periode}`, isLabel: true });
+                // Sort by name (A, B, C...)
+                items.sort((a, b) => a.namaKomisi.localeCompare(b.namaKomisi));
+                // Add items
+                items.forEach(k => {
+                    submenus.push({ key: `komisi-${k.id}`, title: k.namaKomisi });
+                });
+            }
+        });
+
+        return submenus;
+    };
+
+    const komisiSubmenus = generateKomisiSubmenus();
+
     const akdMenus: AkdMenu[] = [
-        {
-            key: 'pimpinan',
-            title: 'Pimpinan DPRD',
-            submenus: pimpinanSubmenus,
-        },
+        { key: 'pimpinan', title: 'Pimpinan DPRD', submenus: pimpinanSubmenus },
+        { key: 'komisi', title: 'Komisi', submenus: komisiSubmenus },
+        { key: 'bamus', title: 'Badan Musyawarah', submenus: bamusSubmenus },
+        { key: 'bapemperda', title: 'Badan Pembentukan Peraturan Daerah', submenus: bapemperdaSubmenus },
+        { key: 'banggar', title: 'Badan Anggaran', submenus: banggarSubmenus },
+        { key: 'bk', title: 'Badan Kehormatan', submenus: bkSubmenus },
         ...staticAkdMenus,
     ];
 
-    // Determine valid slug (default to first pimpinan active or 'pimpinan')
+    // Determine valid slug
     const defaultSlug = !loadingMasa && aktifMasa ? `pimpinan-${aktifMasa.id}` : 'pimpinan';
     const allValidSlugs = [
-        'pimpinan',
-        ...pimpinanSubmenus.map((s) => s.key),
+        'pimpinan', ...pimpinanSubmenus.map((s) => s.key),
+        'komisi', ...komisiSubmenus.filter(s => !s.isLabel).map(s => s.key),
+        'bamus', ...bamusSubmenus.map(s => s.key),
+        'bapemperda', ...bapemperdaSubmenus.map(s => s.key),
+        'banggar', ...banggarSubmenus.map(s => s.key),
+        'bk', ...bkSubmenus.map(s => s.key),
         ...staticAkdMenus.map((m) => m.key),
     ];
 
     const validSlug = (slug && allValidSlugs.includes(slug)) ? slug : defaultSlug;
 
-    const [expanded, setExpanded] = useState<string>('pimpinan');
+    const [expanded, setExpanded] = useState<string>('komisi'); // default expanded
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -92,18 +162,33 @@ const AKDPage: React.FC = () => {
         }
 
         // Bamus
-        if (validSlug === 'bamus') {
-            return <BamusContent />;
+        if (validSlug === 'bamus' || validSlug.startsWith('bamus-')) {
+            const id = validSlug === 'bamus' ? undefined : validSlug.replace('bamus-', '');
+            return <BamusContent id={id} />;
         }
 
         // Bapemperda
-        if (validSlug === 'bapemperda') {
-            return <BapemperdaContent />;
+        if (validSlug === 'bapemperda' || validSlug.startsWith('bapemperda-')) {
+            const id = validSlug === 'bapemperda' ? undefined : validSlug.replace('bapemperda-', '');
+            return <BapemperdaContent id={id} />;
         }
 
         // Banggar
-        if (validSlug === 'banggar') {
-            return <BanggarContent />;
+        if (validSlug === 'banggar' || validSlug.startsWith('banggar-')) {
+            const id = validSlug === 'banggar' ? undefined : validSlug.replace('banggar-', '');
+            return <BanggarContent id={id} />;
+        }
+
+        // BK
+        if (validSlug === 'bk' || validSlug.startsWith('bk-')) {
+            const id = validSlug === 'bk' ? undefined : validSlug.replace('bk-', '');
+            return <BKContent id={id} />;
+        }
+
+        // Komisi
+        if (validSlug === 'komisi' || validSlug.startsWith('komisi-')) {
+            const id = validSlug === 'komisi' ? undefined : validSlug.replace('komisi-', '');
+            return <KomisiContent id={id} />;
         }
 
         // Generic placeholder for other AKD sections
@@ -180,7 +265,7 @@ const AKDPage: React.FC = () => {
 
                                         {/* Submenus */}
                                         {menu.submenus && (
-                                            <div className={`overflow-hidden transition-all duration-300 origin-top ${isExpanded ? 'max-h-[500px] opacity-100 scale-100' : 'max-h-0 opacity-0 scale-95'}`}>
+                                            <div className={`overflow-hidden transition-all duration-300 origin-top ${isExpanded ? 'max-h-[5000px] opacity-100 scale-100' : 'max-h-0 opacity-0 scale-95'}`}>
                                                 <div className={`flex flex-col p-4 bg-white shadow-lg border border-gray-100 rounded-b-md relative z-20 mx-2 mt-1 mb-3 ${isActive ? 'ml-6 border-l-4 border-l-red-600' : ''}`}>
                                                     {loadingMasa ? (
                                                         <div className="space-y-2">
@@ -189,20 +274,29 @@ const AKDPage: React.FC = () => {
                                                             ))}
                                                         </div>
                                                     ) : (
-                                                        menu.submenus.map((sub, idx) => (
-                                                            <Link
-                                                                key={sub.key}
-                                                                to={`/akd/${sub.key}`}
-                                                                className={`py-2 px-3 text-[13px] rounded mb-1 cursor-pointer transition-colors ${validSlug === sub.key
-                                                                    ? 'bg-gray-50 font-bold text-gray-900 border-l-2 border-red-600'
-                                                                    : idx === 0 && validSlug === menu.key
+                                                        menu.submenus.map((sub, idx) => {
+                                                            if (sub.isLabel) {
+                                                                return (
+                                                                    <div key={sub.key} className="text-xs font-black text-gray-500 uppercase tracking-wider mt-4 mb-1.5 px-3 first:mt-1 border-b border-gray-100 pb-1">
+                                                                        {sub.title}
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            return (
+                                                                <Link
+                                                                    key={sub.key}
+                                                                    to={`/akd/${sub.key}`}
+                                                                    className={`py-2 px-3 text-[13px] rounded mb-1 cursor-pointer transition-colors ${validSlug === sub.key
                                                                         ? 'bg-gray-50 font-bold text-gray-900 border-l-2 border-red-600'
-                                                                        : 'font-medium text-gray-600 hover:text-red-600 hover:bg-gray-50'
-                                                                    }`}
-                                                            >
-                                                                {sub.title}
-                                                            </Link>
-                                                        ))
+                                                                        : idx === 0 && validSlug === menu.key && !menu.submenus?.find((s) => !s.isLabel && s.key === validSlug)
+                                                                            ? 'bg-gray-50 font-bold text-gray-900 border-l-2 border-red-600'
+                                                                            : 'font-medium text-gray-600 hover:text-red-600 hover:bg-gray-50'
+                                                                        }`}
+                                                                >
+                                                                    {sub.title}
+                                                                </Link>
+                                                            );
+                                                        })
                                                     )}
                                                 </div>
                                             </div>

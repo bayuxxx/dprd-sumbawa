@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Plus, Edit2, Trash2, X, Upload, User, Save, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, User, ChevronDown } from 'lucide-react';
 import {
     fetchAllBanggarInfo,
     createBanggarInfoApi,
@@ -12,7 +12,13 @@ import {
 import type { BanggarInfo, AnggotaBanggar } from '../../services/api';
 import AdminLayout from './AdminLayout';
 
-const JABATAN_OPTIONS = ['Ketua', 'Wakil Ketua', 'Anggota', 'Sekretaris'];
+// Subcomponents
+import {
+    BanggarInfoModal,
+    BanggarAnggotaModal,
+    BanggarDeleteConfirm
+} from './components/BanggarModals';
+import { BanggarAnggotaSection } from './components/BanggarAnggotaSection';
 
 const emptyAnggotaForm = {
     name: '',
@@ -52,16 +58,16 @@ const AdminBanggarPage: React.FC = () => {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await fetchAllBanggarInfo(token);
+            const data = await fetchAllBanggarInfo();
             setInfoList(data);
             if (data.length > 0 && !expandedInfo) {
                 setExpandedInfo(data[0].id);
             }
-        } catch {
+        } catch (e) {
             setError('Gagal memuat data Banggar');
         }
         setLoading(false);
-    }, [token]);
+    }, [token, expandedInfo]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -97,8 +103,8 @@ const AdminBanggarPage: React.FC = () => {
             }
             setShowInfoForm(false);
             loadData();
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Terjadi kesalahan');
         }
         setSavingInfo(false);
     };
@@ -157,8 +163,8 @@ const AdminBanggarPage: React.FC = () => {
             }
             setShowAnggotaForm(false);
             loadData();
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Terjadi kesalahan');
         }
         setSavingAnggota(false);
     };
@@ -175,8 +181,8 @@ const AdminBanggarPage: React.FC = () => {
             }
             setDeleteTarget(null);
             loadData();
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Terjadi kesalahan');
         }
     };
 
@@ -289,18 +295,10 @@ const AdminBanggarPage: React.FC = () => {
                                                 <p className="text-gray-400 text-sm text-center py-8">Belum ada anggota. Klik "Tambah Anggota" untuk memulai.</p>
                                             ) : (
                                                 <div className="space-y-6">
-                                                    {ketua.length > 0 && (
-                                                        <AnggotaSection title="Ketua" items={ketua} onEdit={openEditAnggota} onDelete={(a) => setDeleteTarget({ type: 'anggota', id: a.id, name: a.name })} />
-                                                    )}
-                                                    {wakil.length > 0 && (
-                                                        <AnggotaSection title="Wakil Ketua" items={wakil} onEdit={openEditAnggota} onDelete={(a) => setDeleteTarget({ type: 'anggota', id: a.id, name: a.name })} />
-                                                    )}
-                                                    {anggota.length > 0 && (
-                                                        <AnggotaSection title="Anggota" items={anggota} onEdit={openEditAnggota} onDelete={(a) => setDeleteTarget({ type: 'anggota', id: a.id, name: a.name })} />
-                                                    )}
-                                                    {sekretaris.length > 0 && (
-                                                        <AnggotaSection title="Sekretaris" items={sekretaris} onEdit={openEditAnggota} onDelete={(a) => setDeleteTarget({ type: 'anggota', id: a.id, name: a.name })} />
-                                                    )}
+                                                    {ketua.length > 0 && <BanggarAnggotaSection title="Ketua" items={ketua} onEdit={openEditAnggota} onDelete={(a) => setDeleteTarget({ type: 'anggota', id: a.id, name: a.name })} />}
+                                                    {wakil.length > 0 && <BanggarAnggotaSection title="Wakil Ketua" items={wakil} onEdit={openEditAnggota} onDelete={(a) => setDeleteTarget({ type: 'anggota', id: a.id, name: a.name })} />}
+                                                    {anggota.length > 0 && <BanggarAnggotaSection title="Anggota" items={anggota} onEdit={openEditAnggota} onDelete={(a) => setDeleteTarget({ type: 'anggota', id: a.id, name: a.name })} />}
+                                                    {sekretaris.length > 0 && <BanggarAnggotaSection title="Sekretaris" items={sekretaris} onEdit={openEditAnggota} onDelete={(a) => setDeleteTarget({ type: 'anggota', id: a.id, name: a.name })} />}
                                                 </div>
                                             )}
                                         </div>
@@ -312,248 +310,37 @@ const AdminBanggarPage: React.FC = () => {
                 )}
             </div>
 
-            {/* ── Info Modal ── */}
-            {showInfoForm && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowInfoForm(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                            <h2 className="text-lg font-black text-gray-900">
-                                {editingInfo ? 'Edit Masa Jabatan Banggar' : 'Tambah Masa Jabatan Banggar'}
-                            </h2>
-                            <button onClick={() => setShowInfoForm(false)} className="text-gray-400 hover:text-gray-600">
-                                <X size={20} />
-                            </button>
-                        </div>
+            {/* Modals placed here */}
+            <BanggarInfoModal
+                show={showInfoForm}
+                onClose={() => setShowInfoForm(false)}
+                isEditing={!!editingInfo}
+                formData={infoForm}
+                setFormData={setInfoForm}
+                onSave={handleSaveInfo}
+                saving={savingInfo}
+            />
 
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Masa Jabatan *</label>
-                                <input
-                                    type="text"
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
-                                    placeholder="Contoh: 2024-2029"
-                                    value={infoForm.masaJabatan}
-                                    onChange={(e) => setInfoForm({ ...infoForm, masaJabatan: e.target.value })}
-                                />
-                            </div>
+            <BanggarAnggotaModal
+                show={showAnggotaForm}
+                onClose={() => setShowAnggotaForm(false)}
+                isEditing={!!editingAnggota}
+                formData={anggotaForm}
+                setFormData={setAnggotaForm}
+                imagePreview={imagePreview}
+                onImageChange={handleImageChange}
+                onSave={handleSaveAnggota}
+                saving={savingAnggota}
+            />
 
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Deskripsi</label>
-                                <textarea
-                                    rows={4}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none resize-none"
-                                    placeholder="Deskripsi tentang Banggar..."
-                                    value={infoForm.deskripsi}
-                                    onChange={(e) => setInfoForm({ ...infoForm, deskripsi: e.target.value })}
-                                />
-                            </div>
-
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={infoForm.isAktif}
-                                    onChange={(e) => setInfoForm({ ...infoForm, isAktif: e.target.checked })}
-                                    className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                                />
-                                <span className="text-sm font-medium text-gray-700">Aktif (tampilkan di halaman publik)</span>
-                            </label>
-                        </div>
-
-                        <div className="flex justify-end gap-3 p-6 border-t border-gray-100">
-                            <button
-                                onClick={() => setShowInfoForm(false)}
-                                className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-                            >
-                                Batal
-                            </button>
-                            <button
-                                onClick={handleSaveInfo}
-                                disabled={savingInfo}
-                                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors disabled:opacity-50"
-                            >
-                                <Save size={16} />
-                                {savingInfo ? 'Menyimpan...' : 'Simpan'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ── Anggota Modal ── */}
-            {showAnggotaForm && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowAnggotaForm(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
-                            <h2 className="text-lg font-black text-gray-900">
-                                {editingAnggota ? 'Edit Anggota Banggar' : 'Tambah Anggota Banggar'}
-                            </h2>
-                            <button onClick={() => setShowAnggotaForm(false)} className="text-gray-400 hover:text-gray-600">
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Foto</label>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-20 h-24 rounded-xl bg-gray-100 overflow-hidden border-2 border-dashed border-gray-200 flex items-center justify-center">
-                                        {imagePreview ? (
-                                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <User size={28} className="text-gray-300" />
-                                        )}
-                                    </div>
-                                    <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors">
-                                        <Upload size={16} />
-                                        Pilih Foto
-                                        <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Nama *</label>
-                                <input
-                                    type="text"
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
-                                    placeholder="Nama lengkap"
-                                    value={anggotaForm.name}
-                                    onChange={(e) => setAnggotaForm({ ...anggotaForm, name: e.target.value })}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Jabatan *</label>
-                                <select
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none bg-white"
-                                    value={anggotaForm.jabatan}
-                                    onChange={(e) => setAnggotaForm({ ...anggotaForm, jabatan: e.target.value })}
-                                >
-                                    {JABATAN_OPTIONS.map((j) => (
-                                        <option key={j} value={j}>{j}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Fraksi</label>
-                                <input
-                                    type="text"
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
-                                    placeholder="Contoh: Fraksi PKS"
-                                    value={anggotaForm.faction}
-                                    onChange={(e) => setAnggotaForm({ ...anggotaForm, faction: e.target.value })}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Urutan</label>
-                                <input
-                                    type="number"
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
-                                    placeholder="0"
-                                    value={anggotaForm.order}
-                                    onChange={(e) => setAnggotaForm({ ...anggotaForm, order: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white">
-                            <button
-                                onClick={() => setShowAnggotaForm(false)}
-                                className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-                            >
-                                Batal
-                            </button>
-                            <button
-                                onClick={handleSaveAnggota}
-                                disabled={savingAnggota}
-                                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors disabled:opacity-50"
-                            >
-                                <Save size={16} />
-                                {savingAnggota ? 'Menyimpan...' : 'Simpan'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ── Delete Confirm ── */}
-            {deleteTarget && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setDeleteTarget(null)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center" onClick={(e) => e.stopPropagation()}>
-                        <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Trash2 size={24} className="text-red-600" />
-                        </div>
-                        <h3 className="text-lg font-black text-gray-900 mb-2">Hapus Data?</h3>
-                        <p className="text-gray-500 text-sm mb-6">
-                            Anda yakin ingin menghapus <span className="font-bold text-gray-700">{deleteTarget.name}</span>?
-                            {deleteTarget.type === 'info' && ' Semua anggota di bawahnya juga akan ikut terhapus.'}
-                        </p>
-                        <div className="flex justify-center gap-3">
-                            <button
-                                onClick={() => setDeleteTarget(null)}
-                                className="px-5 py-2.5 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
-                            >
-                                Batal
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                className="px-5 py-2.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors"
-                            >
-                                Ya, Hapus
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <BanggarDeleteConfirm
+                show={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleDelete}
+                target={deleteTarget}
+            />
         </AdminLayout>
     );
 };
-
-// ── Sub-component: AnggotaSection ──
-const AnggotaSection: React.FC<{
-    title: string;
-    items: AnggotaBanggar[];
-    onEdit: (a: AnggotaBanggar) => void;
-    onDelete: (a: AnggotaBanggar) => void;
-}> = ({ title, items, onEdit, onDelete }) => (
-    <div>
-        <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{title}</h5>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {items.map((anggota) => (
-                <div key={anggota.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition-all group">
-                    <div className="w-12 h-14 rounded-lg bg-white border border-gray-100 overflow-hidden flex-shrink-0">
-                        {anggota.imageUrl ? (
-                            <img src={anggota.imageUrl} alt={anggota.name} className="w-full h-full object-cover object-top" />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                                <User size={18} className="text-gray-300" />
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-900 truncate">{anggota.name}</p>
-                        <p className="text-xs text-gray-500">{anggota.faction || '-'}</p>
-                    </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                            onClick={() => onEdit(anggota)}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        >
-                            <Edit2 size={14} />
-                        </button>
-                        <button
-                            onClick={() => onDelete(anggota)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                            <Trash2 size={14} />
-                        </button>
-                    </div>
-                </div>
-            ))}
-        </div>
-    </div>
-);
 
 export default AdminBanggarPage;

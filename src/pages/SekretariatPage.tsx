@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronRight, User } from 'lucide-react';
-import { fetchSekretariatInfo, fetchAnggotaSekretariat } from '../services/api';
+import { fetchSekretariatInfo, fetchAnggotaSekretariat, getImageUrl } from '../services/api';
 import type { SekretariatInfo, AnggotaSekretariat } from '../services/api';
 
 // ─── Dummy Data (fallback ketika API kosong) ───
@@ -53,7 +53,7 @@ const renderProfileCard = (person: { name: string; title: string; location?: str
             <div className="w-full h-full overflow-hidden rounded-md bg-gray-50">
                 {(person.image || person.imageUrl) ? (
                     <img
-                        src={person.image || person.imageUrl || ''}
+                        src={person.image || getImageUrl(person.imageUrl) || ''}
                         alt={person.name}
                         className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
                     />

@@ -11,6 +11,7 @@ import AKDPage from './pages/AKDPage';
 import SekretariatPage from './pages/SekretariatPage';
 import FraksiPage from './pages/FraksiPage';
 import SilegdaPage from './pages/SilegdaPage';
+import PPIDPage from './pages/PPIDPage';
 
 // Admin Pages
 import AdminLoginPage from './pages/admin/AdminLoginPage';
@@ -23,7 +24,10 @@ import AdminSekretariatPage from './pages/admin/AdminSekretariatPage';
 import AdminBamusPage from './pages/admin/AdminBamusPage';
 import AdminBapemperdaPage from './pages/admin/AdminBapemperdaPage';
 import AdminBanggarPage from './pages/admin/AdminBanggarPage';
+import AdminBKPage from './pages/admin/AdminBKPage';
+import AdminKomisiPage from './pages/admin/AdminKomisiPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminFraksiPage from './pages/admin/AdminFraksiPage';
 
 // Generic placeholder page for unbuilt pages
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
@@ -66,6 +70,9 @@ function App() {
         <Route path="/admin/bamus" element={<AdminBamusPage />} />
         <Route path="/admin/bapemperda" element={<AdminBapemperdaPage />} />
         <Route path="/admin/banggar" element={<AdminBanggarPage />} />
+        <Route path="/admin/bk" element={<AdminBKPage />} />
+        <Route path="/admin/komisi" element={<AdminKomisiPage />} />
+        <Route path="/admin/fraksi" element={<AdminFraksiPage />} />
         <Route path="/admin/users" element={<AdminUsersPage />} />
 
         {/* Public Routes (with Header/Footer) */}
@@ -81,8 +88,8 @@ function App() {
         <Route path="/sekretariat" element={<PublicLayout><SekretariatPage /></PublicLayout>} />
         <Route path="/silegda" element={<PublicLayout><SilegdaPage /></PublicLayout>} />
         <Route path="/silegda/:slug" element={<PublicLayout><SilegdaPage /></PublicLayout>} />
-        <Route path="/ppid" element={<PublicLayout><PlaceholderPage title="PPID - Keterbukaan Informasi Publik" /></PublicLayout>} />
-        <Route path="/ppid/:slug" element={<PublicLayout><PlaceholderPage title="PPID" /></PublicLayout>} />
+        <Route path="/ppid" element={<PublicLayout><PPIDPage /></PublicLayout>} />
+        <Route path="/ppid/:slug" element={<PublicLayout><PPIDPage /></PublicLayout>} />
         <Route path="/agenda" element={<PublicLayout><PlaceholderPage title="Agenda Kegiatan" /></PublicLayout>} />
         <Route path="/galeri" element={<PublicLayout><PlaceholderPage title="Galeri Foto" /></PublicLayout>} />
         <Route path="/video" element={<PublicLayout><PlaceholderPage title="Berita Video" /></PublicLayout>} />

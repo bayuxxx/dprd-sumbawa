@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ArrowRight } from 'lucide-react';
-import { fetchBerita } from '../services/api';
+import { fetchBerita, getImageUrl } from '../services/api';
 import type { Berita } from '../services/api';
 
 const BeritaPage: React.FC = () => {
@@ -130,7 +130,7 @@ const BeritaPage: React.FC = () => {
                                         {/* Image */}
                                         <div className="w-full sm:w-48 flex-shrink-0 overflow-hidden rounded-lg aspect-video sm:aspect-square shadow-sm">
                                             <img
-                                                src={news.imageUrl || 'https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=800&q=80'}
+                                                src={getImageUrl(news.imageUrl) || 'https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=800&q=80'}
                                                 alt={news.title}
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                             />

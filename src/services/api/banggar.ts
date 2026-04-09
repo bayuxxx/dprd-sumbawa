@@ -25,16 +25,15 @@ export interface AnggotaBanggar {
 
 // ── Public APIs ──
 
-export async function fetchBanggarInfo(): Promise<BanggarInfo | null> {
-  const res = await fetch(`${BASE_URL}/banggar/info`);
+export async function fetchBanggarInfo(id?: string): Promise<BanggarInfo | null> {
+  const url = id ? `${BASE_URL}/banggar/info?id=${id}` : `${BASE_URL}/banggar/info`;
+  const res = await fetch(url);
   if (!res.ok) return null;
   return res.json();
 }
 
-export async function fetchAllBanggarInfo(token: string): Promise<BanggarInfo[]> {
-  const res = await fetch(`${BASE_URL}/banggar/info/all`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function fetchAllBanggarInfo(): Promise<BanggarInfo[]> {
+  const res = await fetch(`${BASE_URL}/banggar/info/all`);
   if (!res.ok) return [];
   return res.json();
 }

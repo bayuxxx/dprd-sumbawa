@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { User, Clock, ChevronRight } from 'lucide-react';
-import { fetchMasaJabatan } from '../services/api';
+import { fetchMasaJabatan, getImageUrl } from '../services/api';
 import type { MasaJabatan } from '../services/api';
 
 const PimpinanTerdahuluPage: React.FC = () => {
@@ -90,7 +90,7 @@ const PimpinanTerdahuluPage: React.FC = () => {
                                             <div className="relative h-40 overflow-hidden bg-gray-100">
                                                 {leader.imageUrl ? (
                                                     <img
-                                                        src={leader.imageUrl}
+                                                        src={getImageUrl(leader.imageUrl)}
                                                         alt={leader.name}
                                                         className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                                                     />
